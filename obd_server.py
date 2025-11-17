@@ -24,7 +24,7 @@ import database
 
 # ----- CONFIGURACIÓN OBLIGATORIA -----
 OBD_PORT = "COM6"  # CAMBIA ESTO A TU PUERTO
-GEMINI_API_KEY = "AIzaSyDMtGE41CV8SbFzmWG8a6oPQgVf58k8HLE"  # TU API KEY
+GEMINI_API_KEY = "TU_API_KEY_AQUI"  # TU API KEY
 GEMINI_MODEL_NAME = "models/gemini-pro-latest"
 # -------------------------------------
 
