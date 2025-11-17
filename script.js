@@ -1,5 +1,5 @@
 // =============================================================================
-// SENTINEL PRO v9.0 - FRONTEND JAVASCRIPT COMPLETO
+// SENTINEL PRO v10.0 - FRONTEND JAVASCRIPT COMPLETO
 // Copia y pega TODO este archivo como script.js
 // =============================================================================
 
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === CONFIGURACIÓN ===
     const API_URL = 'http://localhost:5000';
     const POLL_INTERVAL = 3000;
-    
+
     // Referencias DOM - Configuración Vehículo
     const vehicleBrand = document.getElementById('vehicleBrand');
     const vehicleModel = document.getElementById('vehicleModel');
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const vehicleMileage = document.getElementById('vehicleMileage');
     const vehicleType = document.getElementById('vehicleType');
     const vehicleDataInputs = [vehicleBrand, vehicleModel, vehicleYear, vehicleMileage, vehicleType];
-    
+
     // Referencias DOM - Datos en vivo
     const liveRpm = document.getElementById('live_rpm');
     const liveSpeed = document.getElementById('live_speed');
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const liveMaf = document.getElementById('live_maf');
     const liveCoolantTemp = document.getElementById('live_coolant_temp');
     const liveIntakeTemp = document.getElementById('live_intake_temp');
-    
+
     // Referencias DOM - Salud del vehículo
     const healthScore = document.getElementById('health_score');
     const engineHealth = document.getElementById('engine_health');
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const efficiencyHealth = document.getElementById('efficiency_health');
     const warningsContainer = document.getElementById('warnings_container');
     const predictionsContainer = document.getElementById('predictions_container');
-    
+
     // Referencias DOM - Botones
     const analyzeTripBtn = document.getElementById('analyzeTripBtn');
     const downloadReportBtn = document.getElementById('downloadReportBtn');
@@ -45,24 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const commonFailuresResult = document.getElementById('common-failures-result');
     const valuationBtn = document.getElementById('valuationBtn');
     const valuationResult = document.getElementById('valuation-result');
-    
+
     // Referencias DOM - Mantenimiento
     const maintenanceForm = document.getElementById('maintenanceForm');
     const maintenanceLog = document.getElementById('maintenanceLog');
-    
+
     // Referencias DOM - Análisis IA
     const aiResults = document.getElementById('ai-results');
     const aiPlaceholder = document.getElementById('ai-placeholder');
-    
+
     // Variables globales
     let maintenanceHistory = [];
     let isOBDConnected = false;
     let consecutiveFailures = 0;
     const MAX_CONSECUTIVE_FAILURES = 3;
     let uploadedCSVFiles = [];
-    
+    let activeVehicleId = null;
+
     // === FUNCIONES DE ALMACENAMIENTO ===
-    
+
     function saveVehicleInfo() {
         const vehicleInfo = {
             brand: vehicleBrand.value,
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         localStorage.setItem('vehicleInfo', JSON.stringify(vehicleInfo));
     }
-    
+
     function loadVehicleInfo() {
         const savedInfo = localStorage.getItem('vehicleInfo');
         if (savedInfo) {
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             vehicleType.value = vehicleInfo.type || 'gasolina';
         }
     }
-    
+
     function getVehicleInfo() {
         return {
             brand: vehicleBrand.value,
@@ -95,11 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
             mileage: vehicleMileage.value
         };
     }
-    
+
     vehicleDataInputs.forEach(input => input.addEventListener('change', saveVehicleInfo));
-    
+
     // === FUNCIONES DE ACTUALIZACIÓN UI ===
-    
+
     function updateLiveData(data) {
         if (data.RPM === 'Offline' || data.RPM === null) {
             liveRpm.textContent = '---';
@@ -108,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveRpm.textContent = Math.round(data.RPM);
             liveRpm.classList.remove('offline');
         }
-        
+
         if (data.SPEED === 'Offline' || data.SPEED === null) {
             liveSpeed.textContent = '---';
             liveSpeed.classList.add('offline');
@@ -116,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveSpeed.textContent = Math.round(data.SPEED);
             liveSpeed.classList.remove('offline');
         }
-        
+
         if (data.total_distance === 'Offline' || data.total_distance === null) {
             liveDistance.textContent = '---';
             liveDistance.classList.add('offline');
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveDistance.textContent = data.total_distance.toFixed(3);
             liveDistance.classList.remove('offline');
         }
-        
+
         if (data.THROTTLE_POS !== null && data.THROTTLE_POS !== undefined) {
             liveThrottle.textContent = Math.round(data.THROTTLE_POS);
             liveThrottle.classList.remove('offline');
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveThrottle.textContent = '---';
             liveThrottle.classList.add('offline');
         }
-        
+
         if (data.ENGINE_LOAD !== null && data.ENGINE_LOAD !== undefined) {
             liveLoad.textContent = Math.round(data.ENGINE_LOAD);
             liveLoad.classList.remove('offline');
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveLoad.textContent = '---';
             liveLoad.classList.add('offline');
         }
-        
+
         if (data.MAF !== null && data.MAF !== undefined) {
             liveMaf.textContent = data.MAF.toFixed(1);
             liveMaf.classList.remove('offline');
@@ -148,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveMaf.textContent = '---';
             liveMaf.classList.add('offline');
         }
-        
+
         if (data.COOLANT_TEMP !== null && data.COOLANT_TEMP !== undefined) {
             liveCoolantTemp.textContent = Math.round(data.COOLANT_TEMP);
             liveCoolantTemp.classList.remove('offline');
@@ -158,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveCoolantTemp.textContent = '---';
             liveCoolantTemp.classList.add('offline');
         }
-        
+
         if (data.INTAKE_TEMP !== null && data.INTAKE_TEMP !== undefined) {
             liveIntakeTemp.textContent = Math.round(data.INTAKE_TEMP);
             liveIntakeTemp.classList.remove('offline');
@@ -169,17 +170,17 @@ document.addEventListener('DOMContentLoaded', () => {
             liveIntakeTemp.classList.add('offline');
         }
     }
-    
+
     function updateHealthDisplay(health) {
         if (!health) return;
-        
+
         healthScore.textContent = health.overall_score || 100;
         healthScore.className = 'health-score-value ' + getHealthClass(health.overall_score);
-        
+
         engineHealth.textContent = health.engine_health || 100;
         thermalHealth.textContent = health.thermal_health || 100;
         efficiencyHealth.textContent = health.efficiency_health || 100;
-        
+
         if (health.warnings && health.warnings.length > 0) {
             warningsContainer.innerHTML = '<h4><i class="fas fa-exclamation-triangle"></i> Advertencias Activas</h4>';
             const ul = document.createElement('ul');
@@ -194,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             warningsContainer.style.display = 'none';
         }
-        
+
         if (health.predictions && health.predictions.length > 0) {
             predictionsContainer.innerHTML = '<h4><i class="fas fa-chart-line"></i> Predicciones de Mantenimiento</h4>';
             const ul = document.createElement('ul');
@@ -210,14 +211,14 @@ document.addEventListener('DOMContentLoaded', () => {
             predictionsContainer.style.display = 'none';
         }
     }
-    
+
     function getHealthClass(score) {
         if (score >= 80) return 'excellent';
         if (score >= 60) return 'good';
         if (score >= 40) return 'warning';
         return 'critical';
     }
-    
+
     function updateAnalyzeButton() {
         if (isOBDConnected) {
             analyzeTripBtn.innerHTML = '<i class="fas fa-flag-checkered"></i> Finalizar y Analizar Viaje';
@@ -231,58 +232,58 @@ document.addEventListener('DOMContentLoaded', () => {
             analyzeTripBtn.classList.add('mode-fallback');
         }
     }
-    
+
     function showConnectionNotification(message, type = 'info') {
         const existingNotification = document.querySelector('.connection-notification');
         if (existingNotification) {
             existingNotification.remove();
         }
-        
+
         const notification = document.createElement('div');
         notification.className = `connection-notification ${type}`;
         notification.innerHTML = `
             <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
             <span>${message}</span>
         `;
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.style.opacity = '0';
             setTimeout(() => notification.remove(), 300);
         }, 4000);
     }
-    
+
     // === FUNCIONES DE RED ===
-    
+
     async function fetchLiveData() {
         try {
             const response = await fetch(`${API_URL}/get_live_data`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
+
             if (data.offline === true) {
                 if (isOBDConnected) {
                     console.log('[OBD] Conexión perdida');
                     isOBDConnected = false;
                 }
                 consecutiveFailures++;
-                updateLiveData({ 
-                    RPM: 'Offline', 
-                    SPEED: 'Offline', 
+                updateLiveData({
+                    RPM: 'Offline',
+                    SPEED: 'Offline',
                     THROTTLE_POS: 'Offline',
                     ENGINE_LOAD: 'Offline',
                     MAF: 'Offline',
                     COOLANT_TEMP: 'Offline',
                     INTAKE_TEMP: 'Offline',
-                    total_distance: 'Offline' 
+                    total_distance: 'Offline'
                 });
             } else {
                 if (!isOBDConnected) {
@@ -293,32 +294,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 consecutiveFailures = 0;
                 updateLiveData(data);
             }
-            
+
             updateAnalyzeButton();
-            
+
         } catch (error) {
             consecutiveFailures++;
-            
+
             if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES && isOBDConnected) {
                 console.log('[OBD] Múltiples fallos detectados');
                 showConnectionNotification('Conexión OBD perdida. Modo fallback activado.', 'warning');
             }
-            
+
             isOBDConnected = false;
-            updateLiveData({ 
-                RPM: 'Offline', 
+            updateLiveData({
+                RPM: 'Offline',
                 SPEED: 'Offline',
                 THROTTLE_POS: 'Offline',
                 ENGINE_LOAD: 'Offline',
                 MAF: 'Offline',
                 COOLANT_TEMP: 'Offline',
                 INTAKE_TEMP: 'Offline',
-                total_distance: 'Offline' 
+                total_distance: 'Offline'
             });
             updateAnalyzeButton();
         }
     }
-    
+
     async function fetchVehicleHealth() {
         try {
             const response = await fetch(`${API_URL}/get_vehicle_health`);
@@ -330,14 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('[HEALTH] Error obteniendo salud:', error);
         }
     }
-    
+
     async function analyzeTrip() {
-        const loadingMessage = isOBDConnected 
-            ? 'Analizando viaje con datos OBD reales...' 
+        const loadingMessage = isOBDConnected
+            ? 'Analizando viaje con datos OBD reales...'
             : 'Generando análisis predictivo con IA...';
-        
+
         showLoadingState(loadingMessage);
-        
+
         try {
             const response = await fetch(`${API_URL}/predictive_analysis`, {
                 method: 'POST',
@@ -347,36 +348,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     maintenanceHistory
                 })
             });
-            
+
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Error desconocido');
             }
-            
+
             displayPredictiveAnalysis(result);
-            
+
         } catch (error) {
             displayAiError(`Error: ${error.message}`);
         }
     }
-    
+
     function showLoadingState(message) {
         aiPlaceholder.style.display = 'block';
         aiPlaceholder.innerHTML = `<p><i class="fas fa-cogs fa-spin"></i> ${message}</p>`;
         aiResults.style.display = 'none';
     }
-    
+
     function displayPredictiveAnalysis(analysis) {
         aiPlaceholder.style.display = 'none';
-        
+
         let html = `
             <div class="card predictive-analysis">
                 <h2>
                     <i class="fas fa-brain"></i>
                     Análisis Predictivo de Mantenimiento
                 </h2>
-                
+
                 <div class="predictive-score-section">
                     <div class="score-circle ${getHealthClass(analysis.predictive_score)}">
                         <span class="score-number">${analysis.predictive_score}</span>
@@ -388,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
         `;
-        
+
         if (analysis.trip_stats) {
             const stats = analysis.trip_stats;
             html += `
@@ -416,14 +417,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-        
+
         if (analysis.predictions && analysis.predictions.length > 0) {
             html += `
                 <div class="predictions-section">
                     <h3><i class="fas fa-exclamation-circle"></i> Predicciones de Fallos</h3>
                     <div class="predictions-grid">
             `;
-            
+
             analysis.predictions.forEach(pred => {
                 html += `
                     <div class="prediction-card">
@@ -437,17 +438,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             });
-            
+
             html += `</div></div>`;
         }
-        
+
         if (analysis.priority_maintenance && analysis.priority_maintenance.length > 0) {
             html += `
                 <div class="maintenance-section">
                     <h3><i class="fas fa-tools"></i> Mantenimiento Prioritario</h3>
                     <div class="maintenance-list">
             `;
-            
+
             analysis.priority_maintenance.forEach(maint => {
                 const urgencyClass = maint.urgency === 'Alta' ? 'urgent' : 'normal';
                 html += `
@@ -461,17 +462,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             });
-            
+
             html += `</div></div>`;
         }
-        
+
         if (analysis.component_health) {
             html += `
                 <div class="component-health-section">
                     <h3><i class="fas fa-heartbeat"></i> Salud de Componentes</h3>
                     <div class="components-grid">
             `;
-            
+
             for (const [component, health] of Object.entries(analysis.component_health)) {
                 const healthValue = parseInt(health);
                 const healthClass = getHealthClass(healthValue);
@@ -485,10 +486,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             }
-            
+
             html += `</div></div>`;
         }
-        
+
         if (analysis.cost_estimate) {
             html += `
                 <div class="cost-estimate-section">
@@ -511,61 +512,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-        
+
         html += `</div>`;
         aiResults.innerHTML = html;
         aiResults.style.display = 'block';
     }
-    
+
     function displayAiError(errorMessage) {
         aiPlaceholder.style.display = 'block';
         aiPlaceholder.innerHTML = `<p style="color: red;"><i class="fas fa-exclamation-triangle"></i> ${errorMessage}</p>`;
         aiResults.style.display = 'none';
     }
-    
+
     // === FUNCIONES AVERÍAS COMUNES ===
-    
+
     async function getCommonFailures() {
         const vehicleInfo = getVehicleInfo();
         if (!vehicleInfo.brand || !vehicleInfo.model || !vehicleInfo.year) {
             alert('Por favor, introduce la Marca, Modelo y Año del vehículo.');
             return;
         }
-        
+
         commonFailuresResult.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Buscando averías comunes...</p>`;
-        
+
         try {
             const response = await fetch(`${API_URL}/get_common_failures`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vehicleInfo })
             });
-            
+
             const result = await response.json();
-            
+
             if (!response.ok) throw new Error(result.error || 'Error desconocido.');
-            
+
             createAccordionFromJSON(commonFailuresResult, result);
         } catch(error) {
             commonFailuresResult.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
         }
     }
-    
+
     function createAccordionFromJSON(container, data) {
         container.innerHTML = '';
-        
+
         if (data.failures && Array.isArray(data.failures)) {
             data.failures.forEach(failure => {
                 const item = document.createElement('div');
                 item.className = 'accordion-item';
-                
+
                 const button = document.createElement('button');
                 button.className = 'accordion-button';
                 if (failure.severity) {
                     button.classList.add(`severity-${failure.severity.toLowerCase()}`);
                 }
                 button.textContent = failure.title || "Avería sin título";
-                
+
                 const panel = document.createElement('div');
                 panel.className = 'accordion-panel';
                 panel.innerHTML = `
@@ -573,11 +574,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><strong>Causa:</strong> ${failure.cause || "N/D"}</p>
                     <p><strong>Solución:</strong> ${failure.solution || "N/D"}</p>
                 `;
-                
+
                 item.appendChild(button);
                 item.appendChild(panel);
                 container.appendChild(item);
-                
+
                 button.addEventListener('click', () => {
                     button.classList.toggle('active');
                     if (panel.style.maxHeight) {
@@ -590,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         }
-        
+
         if (data.recommendation) {
             const recommendationBox = document.createElement('div');
             recommendationBox.className = 'recommendation-box';
@@ -601,29 +602,29 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(recommendationBox);
         }
     }
-    
+
     // === FUNCIONES DE TASACIÓN ===
-    
+
     async function getValuation() {
         const vehicleInfo = getVehicleInfo();
         if (!vehicleInfo.brand || !vehicleInfo.model || !vehicleInfo.year || !vehicleInfo.mileage) {
             alert('Por favor, introduce Marca, Modelo, Año y Kilómetros.');
             return;
         }
-        
+
         valuationResult.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Realizando tasación...</p>`;
-        
+
         try {
             const response = await fetch(`${API_URL}/get_vehicle_valuation`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vehicleInfo, maintenanceHistory })
             });
-            
+
             const result = await response.json();
-            
+
             if (!response.ok || result.error) throw new Error(result.error || 'Respuesta no válida.');
-            
+
             valuationResult.innerHTML = `
                 <div class="valuation-prices">
                     <div><span>Precio Mín. Mercado</span><strong>${result.min_price || 'N/D'} €</strong></div>
@@ -642,30 +643,30 @@ document.addEventListener('DOMContentLoaded', () => {
             valuationResult.innerHTML = `<p style="color:red;">Error al tasar: ${error.message}</p>`;
         }
     }
-    
+
     // === FUNCIONES CSV ===
-    
+
     async function loadUploadedCSVs() {
         try {
             const response = await fetch(`${API_URL}/list_uploaded_csvs`);
             const result = await response.json();
-            
+
             if (!response.ok) throw new Error(result.error || 'Error cargando archivos');
-            
+
             uploadedCSVFiles = result.files || [];
             renderCSVFilesList();
-            
+
         } catch (error) {
             console.error('[CSV] Error:', error);
         }
     }
-    
+
     function renderCSVFilesList() {
         if (uploadedCSVFiles.length === 0) {
             csvFilesList.innerHTML = '<p class="no-data">No hay archivos CSV. Sube uno para comenzar.</p>';
             return;
         }
-        
+
         csvFilesList.innerHTML = uploadedCSVFiles.map(file => `
             <div class="csv-file-item">
                 <div class="csv-file-info">
@@ -675,40 +676,40 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
     }
-    
+
     uploadCSVBtn.addEventListener('click', () => {
         uploadCSVInput.click();
     });
-    
+
     uploadCSVInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         if (!file.name.endsWith('.csv')) {
             alert('Por favor, selecciona un archivo CSV válido.');
             return;
         }
-        
+
         const formData = new FormData();
         formData.append('file', file);
-        
+
         uploadCSVBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
         uploadCSVBtn.disabled = true;
-        
+
         try {
             const response = await fetch(`${API_URL}/upload_csv`, {
                 method: 'POST',
                 body: formData
             });
-            
+
             const result = await response.json();
-            
+
             if (!response.ok) throw new Error(result.error || 'Error al subir');
-            
+
             showConnectionNotification(`CSV subido: ${result.filename}`, 'success');
             loadUploadedCSVs();
             uploadCSVInput.value = '';
-            
+
         } catch (error) {
             alert(`Error: ${error.message}`);
         } finally {
@@ -716,13 +717,13 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadCSVBtn.disabled = false;
         }
     });
-    
+
     downloadCSVBtn.addEventListener('click', async () => {
         try {
             const response = await fetch(`${API_URL}/download_current_csv`);
-            
+
             if (!response.ok) throw new Error('No hay datos CSV');
-            
+
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -732,16 +733,16 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-            
+
             showConnectionNotification('CSV descargado correctamente', 'success');
-            
+
         } catch (error) {
             alert(`Error: ${error.message}`);
         }
     });
-    
+
     // === FUNCIONES DE MANTENIMIENTO ===
-    
+
     function renderMaintenanceLog() {
         if (maintenanceHistory.length === 0) {
             maintenanceLog.innerHTML = '<li class="no-data">No hay registros.</li>';
@@ -757,11 +758,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `).join('');
         }
     }
-    
+
     function saveMaintenanceLog() {
         localStorage.setItem('maintenanceHistory', JSON.stringify(maintenanceHistory));
     }
-    
+
     function loadMaintenanceLog() {
         const stored = localStorage.getItem('maintenanceHistory');
         if (stored) {
@@ -769,7 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderMaintenanceLog();
         }
     }
-    
+
     maintenanceForm.addEventListener('submit', (e) => {
         e.preventDefault();
         maintenanceHistory.push({
@@ -780,7 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMaintenanceLog();
         maintenanceForm.reset();
     });
-    
+
     maintenanceLog.addEventListener('click', (e) => {
         if (e.target.classList.contains('delete-btn')) {
             maintenanceHistory.splice(e.target.dataset.index, 1);
@@ -788,13 +789,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderMaintenanceLog();
         }
     });
-    
+
     // === DESCARGAR REPORTE ===
-    
+
     async function downloadReport() {
         downloadReportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
         downloadReportBtn.disabled = true;
-        
+
         try {
             const response = await fetch(`${API_URL}/generate_report`, {
                 method: 'POST',
@@ -804,9 +805,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     maintenanceHistory
                 })
             });
-            
+
             if (!response.ok) throw new Error('Error generando informe');
-            
+
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -817,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-            
+
         } catch (error) {
             alert(`Error: ${error.message}`);
         } finally {
@@ -825,34 +826,314 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadReportBtn.disabled = false;
         }
     }
-    
+
+    // === FUNCIONES DEL MODAL DE VEHÍCULOS ===
+
+    function openModal() {
+        console.log('Abriendo modal');
+        const modal = document.getElementById('vehicleModal');
+
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Limpiar formulario
+            document.getElementById('vehicleForm').reset();
+            document.getElementById('vehicleId').value = '';
+            document.getElementById('modalTitleText').textContent = 'Añadir Nuevo Vehículo';
+        } else {
+            console.error('Modal no encontrado');
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('vehicleModal');
+
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // === GESTIÓN DE VEHÍCULOS ===
+
+    async function loadVehicles() {
+        try {
+            const response = await fetch(`${API_URL}/get_vehicles`);
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Error cargando vehículos');
+
+            renderVehiclesList(result.vehicles || []);
+            updateQuickVehicleSelector(result.vehicles || []);
+
+        } catch (error) {
+            console.error('[VEHICLES] Error:', error);
+        }
+    }
+
+    function renderVehiclesList(vehicles) {
+        const vehiclesList = document.getElementById('vehiclesList');
+
+        if (!vehicles || vehicles.length === 0) {
+            vehiclesList.innerHTML = `
+                <div class="no-vehicles-message">
+                    <i class="fas fa-car-side" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                    <h3>No hay vehículos registrados</h3>
+                    <p>Añade tu primer vehículo para comenzar el monitoreo OBD-II y análisis predictivo</p>
+                </div>
+            `;
+            return;
+        }
+
+        vehiclesList.innerHTML = vehicles.map(vehicle => {
+            const isActive = vehicle.is_active ? 'active' : '';
+            const fuelClass = vehicle.fuel_type ? vehicle.fuel_type.toLowerCase() : 'gasolina';
+
+            return `
+                <div class="vehicle-card ${isActive}" data-vehicle-id="${vehicle.id}">
+                    <div class="vehicle-card-header">
+                        <h3 class="vehicle-card-title">
+                            <i class="fas fa-car"></i>
+                            ${vehicle.brand} ${vehicle.model}
+                        </h3>
+                        <p class="vehicle-card-subtitle">${vehicle.year}</p>
+                    </div>
+                    <div class="vehicle-card-body">
+                        <div class="vehicle-info-row">
+                            <i class="fas fa-road"></i>
+                            <span>${vehicle.mileage.toLocaleString()} km</span>
+                        </div>
+                        <div class="vehicle-info-row">
+                            <i class="fas fa-gas-pump"></i>
+                            <span class="fuel-badge ${fuelClass}">${vehicle.fuel_type}</span>
+                        </div>
+                        ${vehicle.license_plate ? `
+                        <div class="vehicle-info-row">
+                            <i class="fas fa-id-card"></i>
+                            <span>${vehicle.license_plate}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="vehicle-card-footer">
+                        ${!vehicle.is_active ? `
+                        <button class="btn btn-small btn-success" onclick="setActiveVehicle(${vehicle.id})">
+                            <i class="fas fa-check"></i> Seleccionar
+                        </button>
+                        ` : ''}
+                        <button class="btn btn-small btn-icon" onclick="editVehicle(${vehicle.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-icon btn-danger" onclick="deleteVehicle(${vehicle.id}, '${vehicle.brand} ${vehicle.model}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateQuickVehicleSelector(vehicles) {
+        const selector = document.getElementById('quickVehicleSelector');
+
+        if (!vehicles || vehicles.length === 0) {
+            selector.innerHTML = '<option value="">Sin vehículo seleccionado</option>';
+            return;
+        }
+
+        selector.innerHTML = vehicles.map(vehicle => {
+            const selected = vehicle.is_active ? 'selected' : '';
+            return `<option value="${vehicle.id}" ${selected}>${vehicle.brand} ${vehicle.model} (${vehicle.year})</option>`;
+        }).join('');
+
+        // Actualizar configuración visible
+        const activeVehicle = vehicles.find(v => v.is_active);
+        if (activeVehicle) {
+            activeVehicleId = activeVehicle.id;
+            updateVehicleConfig(activeVehicle);
+        } else {
+            document.getElementById('noActiveVehicleMessage').style.display = 'block';
+            document.getElementById('activeVehicleConfig').style.display = 'none';
+        }
+    }
+
+    function updateVehicleConfig(vehicle) {
+        document.getElementById('noActiveVehicleMessage').style.display = 'none';
+        document.getElementById('activeVehicleConfig').style.display = 'block';
+
+        document.getElementById('vehicleBrand').value = vehicle.brand || '';
+        document.getElementById('vehicleModel').value = vehicle.model || '';
+        document.getElementById('vehicleYear').value = vehicle.year || '';
+        document.getElementById('vehicleMileage').value = vehicle.mileage || '';
+        document.getElementById('vehicleType').value = vehicle.fuel_type || 'gasolina';
+    }
+
+    async function saveVehicle(event) {
+        event.preventDefault();
+
+        const vehicleData = {
+            id: document.getElementById('vehicleId').value || null,
+            brand: document.getElementById('modalVehicleBrand').value,
+            model: document.getElementById('modalVehicleModel').value,
+            year: parseInt(document.getElementById('modalVehicleYear').value),
+            mileage: parseInt(document.getElementById('modalVehicleMileage').value),
+            fuel_type: document.getElementById('modalVehicleType').value,
+            vin: document.getElementById('modalVehicleVIN').value || null,
+            license_plate: document.getElementById('modalVehiclePlate').value.toUpperCase() || null
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/save_vehicle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vehicleData)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Error guardando vehículo');
+
+            showConnectionNotification(vehicleData.id ? 'Vehículo actualizado' : 'Vehículo añadido', 'success');
+            closeModal();
+            loadVehicles();
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    }
+
+    // Funciones globales para botones inline
+    window.setActiveVehicle = async function(vehicleId) {
+        try {
+            const response = await fetch(`${API_URL}/set_active_vehicle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vehicle_id: vehicleId })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Error');
+
+            showConnectionNotification('Vehículo activado', 'success');
+            loadVehicles();
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
+
+    window.editVehicle = async function(vehicleId) {
+        try {
+            const response = await fetch(`${API_URL}/get_vehicle/${vehicleId}`);
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Error');
+
+            const vehicle = result.vehicle;
+
+            document.getElementById('vehicleId').value = vehicle.id;
+            document.getElementById('modalVehicleBrand').value = vehicle.brand;
+            document.getElementById('modalVehicleModel').value = vehicle.model;
+            document.getElementById('modalVehicleYear').value = vehicle.year;
+            document.getElementById('modalVehicleMileage').value = vehicle.mileage;
+            document.getElementById('modalVehicleType').value = vehicle.fuel_type;
+            document.getElementById('modalVehicleVIN').value = vehicle.vin || '';
+            document.getElementById('modalVehiclePlate').value = vehicle.license_plate || '';
+            document.getElementById('modalTitleText').textContent = 'Editar Vehículo';
+
+            openModal();
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
+
+    window.deleteVehicle = async function(vehicleId, vehicleName) {
+        if (!confirm(`¿Estás seguro de que quieres eliminar "${vehicleName}"?\n\nEsta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/delete_vehicle/${vehicleId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Error');
+
+            showConnectionNotification('Vehículo eliminado', 'success');
+            loadVehicles();
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
+
     // === EVENT LISTENERS ===
-    
+
     analyzeTripBtn.addEventListener('click', analyzeTrip);
     downloadReportBtn.addEventListener('click', downloadReport);
     commonFailuresBtn.addEventListener('click', getCommonFailures);
     valuationBtn.addEventListener('click', getValuation);
-    
+
+    // Event listeners del modal
+    document.getElementById('addVehicleBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Botón clickeado');
+        openModal();
+    });
+
+    document.querySelector('.modal-close').addEventListener('click', closeModal);
+
+    const cancelButtons = document.querySelectorAll('.modal-cancel');
+    cancelButtons.forEach(btn => {
+        btn.addEventListener('click', closeModal);
+    });
+
+    document.getElementById('vehicleModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    document.getElementById('vehicleForm').addEventListener('submit', saveVehicle);
+
+    document.getElementById('quickVehicleSelector').addEventListener('change', function(e) {
+        const vehicleId = parseInt(e.target.value);
+        if (vehicleId) {
+            window.setActiveVehicle(vehicleId);
+        }
+    });
+
     // === INICIALIZACIÓN ===
-    
-    console.log('[INIT] SENTINEL PRO v9.0 iniciado');
+
+    console.log('[INIT] SENTINEL PRO v10.0 iniciado');
     console.log('[INIT] Optimizaciones:');
     console.log('  ✓ Datos críticos cada 3s: RPM, velocidad, acelerador, carga, MAF');
     console.log('  ✓ Datos térmicos cada 60s: temperaturas');
     console.log('  ✓ Análisis salud automático cada 90s');
-    
+
     loadVehicleInfo();
     loadMaintenanceLog();
     updateAnalyzeButton();
     loadUploadedCSVs();
-    
+    loadVehicles();
+
     // Polling de datos OBD
     fetchLiveData();
     setInterval(fetchLiveData, POLL_INTERVAL);
-    
+
     // Polling de salud del vehículo
     fetchVehicleHealth();
     setInterval(fetchVehicleHealth, 10000);
-    
+
     console.log('[INIT] ✓ Sistema activo');
 });
