@@ -1,0 +1,24 @@
+# =============================================================================
+# SENTINEL PRO v10.0 - Dependencias de Python
+# =============================================================================
+
+# Framework Web
+Flask==3.0.0
+flask-cors==4.0.0
+
+# OBD-II
+obd==0.7.1
+
+# Inteligencia Artificial - Google Gemini
+google-generativeai==0.3.2
+
+# Generación de PDF
+fpdf==1.7.2
+
+# Geolocalización
+geocoder==1.38.1
+
+# HTTP Requests
+requests==2.31.0
+
+# Nota: SQLite3 viene incluido con Python, no requiere instalación adicional

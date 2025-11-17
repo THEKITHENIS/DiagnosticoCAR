@@ -1,388 +1,350 @@
-# SENTINEL PRO v10.0 - Sistema Multi-Vehículo con SQLite
+# SENTINEL PRO v10.0 - Sistema Multi-Vehículo
 
-Sistema profesional de mantenimiento predictivo vehicular con gestión de múltiples vehículos, base de datos SQLite persistente e inteligencia artificial.
+## 📋 Descripción
 
-## 🚀 Características Principales
-
-### ✅ **MULTI-VEHÍCULO**
-- Gestión ilimitada de vehículos
-- Selector rápido en header
-- Histórico independiente por vehículo
-- Comparativas entre vehículos
-
-### ✅ **BASE DE DATOS SQLite**
-- Almacenamiento persistente de todos los datos
-- Tablas: vehicles, telemetry_data, maintenance_records, ai_analysis
-- Backup automático de base de datos
-- Importación/exportación de datos
-
-### ✅ **MONITOREO OBD-II EN TIEMPO REAL**
-- Lectura cada 3 segundos: RPM, velocidad, acelerador, carga, MAF
-- Lectura cada 60 segundos: temperaturas (refrigerante, admisión)
-- Cálculo preciso de distancia recorrida
-- Detección automática de viajes
-
-### ✅ **ANÁLISIS PREDICTIVO CON IA (Google Gemini)**
-- Predicción de fallos en 6-12 meses
-- Scoring de salud del vehículo (0-100)
-- Análisis de conducción y desgaste
-- Averías comunes por modelo específico
-- Tasación inteligente ajustada por mantenimiento
-
-### ✅ **MANTENIMIENTO INTELIGENTE**
-- Registro de intervenciones por vehículo
-- Historial completo de mantenimiento
-- Alertas preventivas automáticas
-- Generación de informes PDF
-
-### ✅ **GESTIÓN DE DATOS**
-- Exportación CSV con todos los datos
-- Generación de informes PDF profesionales
-- Backup completo de base de datos
-- Importación de CSV históricos
+**SENTINEL PRO** es un sistema inteligente de mantenimiento predictivo vehicular que utiliza:
+- **Monitoreo OBD-II** en tiempo real
+- **Base de datos SQLite** para persistencia multi-vehículo
+- **Inteligencia Artificial** (Google Gemini) para análisis predictivo
+- **Gestión completa** de múltiples vehículos
 
 ---
 
-## 📦 Instalación
+## ⚡ INSTALACIÓN RÁPIDA
 
-### Requisitos Previos
-
-- Python 3.8 o superior
-- Adaptador OBD-II (ELM327 o similar)
-- Google Gemini API Key (gratuita)
-
-### Dependencias de Python
+### 1️⃣ Instalar Dependencias
 
 ```bash
-pip install flask
-pip install flask-cors
-pip install obd
-pip install google-generativeai
-pip install fpdf
-pip install geocoder
+pip install -r requirements.txt
 ```
 
-### Configuración Inicial
+### 2️⃣ Inicializar Base de Datos
 
-1. **Clona o descarga** este repositorio:
-   ```bash
-   cd DiagnosticoCAR
-   ```
+```bash
+python init_database.py
+```
 
-2. **Edita `obd_server.py`** y configura:
-   ```python
-   OBD_PORT = "COM6"  # Cambia a tu puerto (COM3, /dev/ttyUSB0, etc.)
-   GEMINI_API_KEY = "TU_API_KEY_AQUI"  # Obtén una gratis en ai.google.dev
-   ```
+### 3️⃣ (OPCIONAL) Migrar Datos Históricos
 
-3. **Inicializa la base de datos**:
-   ```bash
-   python init_database.py
-   ```
-   Esto creará el archivo `sentinel_pro.db` con todas las tablas necesarias.
+Si tienes archivos `health_history.json` o `historial_viajes.json`, migra los datos:
 
-4. **Inicia el servidor**:
-   ```bash
-   python obd_server.py
-   ```
-   Verás:
-   ```
-   ======================================================================
-   SENTINEL PRO - MANTENIMIENTO PREDICTIVO v10.0 MULTI-VEHÍCULO
-   ======================================================================
-   [DATABASE] ✓ Base de datos inicializada
-   [OBD] Conectando a COM6...
-   [OBD] ✓ Conectado exitosamente
-   ✓ Servidor activo en http://localhost:5000
-   ```
+```bash
+python migrate_json_to_db.py
+```
 
-5. **Abre `index.html`** en tu navegador (Chrome, Firefox, Edge)
+**✅ Los archivos originales se copiarán a `backup/FECHA_HORA/` y NO serán eliminados.**
+
+### 4️⃣ Configurar Conexión OBD-II y API
+
+Edita el archivo `obd_server.py` y configura:
+
+```python
+# Líneas 26-28
+OBD_PORT = "COM6"  # Cambia esto a tu puerto OBD-II (ej: COM3, /dev/ttyUSB0)
+GEMINI_API_KEY = "TU_API_KEY_AQUI"  # Tu API key de Google Gemini
+```
+
+**Obtener API Key de Google Gemini:**
+1. Ve a https://makersuite.google.com/app/apikey
+2. Crea un nuevo proyecto
+3. Genera una API Key
+4. Cópiala en `GEMINI_API_KEY`
+
+### 5️⃣ Iniciar Servidor
+
+```bash
+python obd_server.py
+```
+
+### 6️⃣ Abrir Aplicación
+
+Abre tu navegador en:
+```
+http://localhost:5000
+```
+
+O simplemente abre el archivo `index.html` directamente.
 
 ---
 
-## 🚗 Uso del Sistema
+## 🚗 PRIMER USO
 
-### 1. **Añadir tu Primer Vehículo**
+### Añadir tu Primer Vehículo
 
-1. Abre la aplicación en tu navegador
-2. Ve a "Gestión de Vehículos"
-3. Haz clic en "Añadir Nuevo Vehículo"
-4. Completa el formulario:
+1. Haz clic en **"Añadir Nuevo Vehículo"** en la sección de Gestión de Vehículos
+2. Rellena los datos:
    - **Marca** (ej: Seat)
    - **Modelo y Motor** (ej: León 2.0 TDI)
    - **Año** (ej: 2018)
    - **Kilómetros** (ej: 95000)
-   - **Tipo de combustible** (Gasolina/Diesel/Híbrido/Eléctrico)
-   - **VIN** (opcional: número de bastidor)
-   - **Matrícula** (opcional)
-5. Haz clic en "Guardar Vehículo"
+   - **Tipo de Combustible** (Gasolina, Diésel, Híbrido, Eléctrico)
+   - *Opcional:* VIN, Matrícula
 
-### 2. **Seleccionar Vehículo Activo para Monitoreo**
-
-1. En la sección "Gestión de Vehículos", haz clic en **"Seleccionar"** en el vehículo que deseas monitorear
-2. Verás un indicador verde "ACTIVO" en la tarjeta del vehículo
-3. El vehículo aparecerá en el selector del header
-4. Todos los datos OBD-II se asociarán a este vehículo
-
-### 3. **Monitoreo en Tiempo Real**
-
-1. **Enciende tu vehículo** con el adaptador OBD-II conectado
-2. La aplicación detectará automáticamente cuando el motor esté encendido (RPM > 400)
-3. Verás datos actualizados cada 3 segundos en "Datos en Vivo"
-4. El sistema guardará automáticamente:
-   - Telemetría en la base de datos
-   - Datos en archivo CSV
-   - Análisis de salud cada 90 segundos
-
-### 4. **Análisis Predictivo con IA**
-
-1. **Conduce al menos 2 minutos** para recopilar datos suficientes
-2. Haz clic en **"Análisis Predictivo con IA"**
-3. El sistema generará:
-   - Predicción de fallos en 6-12 meses
-   - Mantenimiento prioritario
-   - Estimación de costes
-   - Scoring de componentes
-
-### 5. **Registrar Mantenimiento**
-
-1. Ve a "Registro de Mantenimiento"
-2. Ingresa:
-   - Tipo de intervención (ej: "Cambio de aceite")
-   - Fecha de la intervención
-3. Haz clic en "Registrar Intervención"
-4. El historial se guardará en la base de datos asociado al vehículo activo
-
-### 6. **Gestionar Múltiples Vehículos**
-
-- **Cambiar de vehículo**: Usa el selector rápido en el header o selecciona desde "Gestión de Vehículos"
-- **Editar vehículo**: Haz clic en "Editar" en la tarjeta del vehículo
-- **Eliminar vehículo**: Haz clic en "Eliminar" (requiere confirmación)
-- **Ver estadísticas**: Cada tarjeta muestra:
-  - Salud general
-  - Total de lecturas OBD-II
-  - Última conexión
-  - Registros de mantenimiento
+3. Haz clic en **"Guardar Vehículo"**
+4. Haz clic en **"Seleccionar"** para activarlo como vehículo activo
+5. Conecta tu adaptador OBD-II al vehículo
+6. Enciende el motor
+7. ¡SENTINEL PRO comenzará a monitorear automáticamente!
 
 ---
 
-## 📊 Estructura de la Base de Datos
+## ✨ CARACTERÍSTICAS PRINCIPALES
 
-### Tabla: **vehicles**
-```sql
-- id (PRIMARY KEY)
-- brand (marca del vehículo)
-- model (modelo y motor)
-- year (año)
-- mileage (kilómetros)
-- fuel_type (gasolina, diesel, hibrido, electrico)
-- vin (número de bastidor, opcional)
-- plate (matrícula, opcional)
-- created_at (fecha de creación)
-- updated_at (fecha de última actualización)
-```
+### ✅ Gestión Multi-Vehículo
+- Añadir, editar y eliminar vehículos ilimitados
+- Selector rápido de vehículo activo
+- Historial completo por vehículo
+- Estadísticas individuales
 
-### Tabla: **telemetry_data**
-```sql
-- id (PRIMARY KEY)
-- vehicle_id (FOREIGN KEY a vehicles.id)
-- timestamp (fecha y hora de la lectura)
-- rpm, speed, throttle_position, engine_load
-- coolant_temp, intake_temp, maf, distance
-```
+### ✅ Monitoreo OBD-II en Tiempo Real
+- **Datos críticos cada 3 segundos:**
+  - RPM del motor
+  - Velocidad (km/h)
+  - Posición del acelerador (%)
+  - Carga del motor (%)
+  - Flujo de aire MAF (g/s)
+  - Distancia recorrida (km)
 
-### Tabla: **maintenance_records**
-```sql
-- id (PRIMARY KEY)
-- vehicle_id (FOREIGN KEY a vehicles.id)
-- maintenance_type (tipo de intervención)
-- maintenance_date (fecha de la intervención)
-- notes (notas adicionales)
-- created_at (fecha de registro)
-```
+- **Datos térmicos cada 60 segundos:**
+  - Temperatura del refrigerante (°C)
+  - Temperatura de admisión (°C)
 
-### Tabla: **ai_analysis**
-```sql
-- id (PRIMARY KEY)
-- vehicle_id (FOREIGN KEY a vehicles.id)
-- analysis_date (fecha del análisis)
-- health_score (puntuación 0-100)
-- engine_health, thermal_health, efficiency_health
-- predictions (JSON con predicciones)
-- warnings (JSON con advertencias)
-```
+### ✅ Análisis Predictivo con IA
+- Scoring de salud del vehículo (0-100)
+- Predicción de fallos en 6-12 meses
+- Detección de patrones de desgaste
+- Recomendaciones de mantenimiento prioritario
+- Estimación de costes preventivos vs correctivos
 
----
+### ✅ Inteligencia Artificial Avanzada
+- **Averías Comunes**: Base de conocimiento específica por modelo
+- **Tasación Inteligente**: Valoración de mercado ajustada por uso y mantenimiento
+- **Análisis de Conducción**: Detección de conducción agresiva
 
-## 🔧 Endpoints REST API
+### ✅ Historial y Datos Persistentes
+- Base de datos SQLite profesional
+- Historial completo de telemetría
+- Registro de mantenimiento por vehículo
+- Análisis de salud histórico
+- Backup automático de datos
 
-### Vehículos
-```
-POST   /api/vehicles              - Crear nuevo vehículo
-GET    /api/vehicles              - Obtener todos los vehículos
-GET    /api/vehicles/<id>         - Obtener un vehículo específico
-PUT    /api/vehicles/<id>         - Actualizar vehículo
-DELETE /api/vehicles/<id>         - Eliminar vehículo
-POST   /api/vehicles/<id>/select  - Seleccionar vehículo activo
-GET    /api/vehicles/active       - Obtener vehículo activo
-```
+### ✅ Gestión de Archivos CSV
+- Importar datos históricos de viajes
+- Exportar datos para análisis externo
+- Descarga de informes en PDF
 
-### Telemetría
-```
-GET    /api/telemetry/<vehicle_id>  - Obtener historial de telemetría
-```
-
-### Mantenimiento
-```
-POST   /api/maintenance               - Guardar registro de mantenimiento
-GET    /api/maintenance/<vehicle_id>  - Obtener historial de mantenimiento
-DELETE /api/maintenance/<record_id>   - Eliminar registro
-```
-
-### Análisis IA
-```
-POST   /api/analysis               - Guardar análisis de IA
-GET    /api/analysis/<vehicle_id>  - Obtener historial de análisis
-```
-
-### Backup
-```
-GET    /api/backup/database        - Descargar backup de la base de datos
-```
+### ✅ Modal Profesional y Responsive
+- Ventana flotante centrada con overlay oscuro
+- Animaciones suaves
+- Cierre con ESC, clic fuera o botón X
+- Diseño adaptable a móvil y escritorio
 
 ---
 
-## 🛠️ Solución de Problemas
-
-### Problema: "No se puede conectar al puerto OBD"
-
-**Solución**:
-1. Verifica que el adaptador OBD-II esté conectado al puerto del vehículo
-2. Enciende el contacto del vehículo
-3. En Windows: Abre el Administrador de Dispositivos → Puertos COM → Anota el puerto (ej: COM6)
-4. En Linux: Usa `ls /dev/ttyUSB*` para ver puertos disponibles
-5. Actualiza `OBD_PORT` en `obd_server.py`
-6. Reinicia el servidor
-
-### Problema: "Error de API de Gemini"
-
-**Solución**:
-1. Obtén una API Key gratuita en: https://ai.google.dev
-2. Actualiza `GEMINI_API_KEY` en `obd_server.py`
-3. Verifica que la key no tenga espacios ni comillas extra
-4. Reinicia el servidor
-
-### Problema: "No se guardan los datos en la base de datos"
-
-**Solución**:
-1. Verifica que existe el archivo `sentinel_pro.db` en la carpeta del proyecto
-2. Ejecuta: `python init_database.py`
-3. Verifica permisos de escritura en la carpeta
-4. Revisa la consola del servidor para errores
-
-### Problema: "El selector de vehículos está vacío"
-
-**Solución**:
-1. Verifica que el servidor esté en ejecución (`python obd_server.py`)
-2. Abre la consola del navegador (F12) para ver errores
-3. Verifica que la URL del API_URL en `script.js` sea `http://localhost:5000`
-4. Añade al menos un vehículo desde "Gestión de Vehículos"
-
----
-
-## 📝 Archivos del Proyecto
+## 📁 ESTRUCTURA DE ARCHIVOS
 
 ```
 DiagnosticoCAR/
-├── database.py              # Módulo de gestión de base de datos SQLite
-├── init_database.py         # Script de inicialización de base de datos
-├── obd_server.py            # Servidor Flask con endpoints REST
-├── index.html               # Interfaz web principal
-├── script.js                # Lógica JavaScript del frontend
-├── style.css                # Estilos CSS
-├── README.md                # Este archivo
-├── sentinel_pro.db          # Base de datos SQLite (se crea al inicializar)
-├── csv_data/                # Carpeta con archivos CSV generados
-├── uploaded_csv/            # Carpeta con CSVs subidos por el usuario
-└── health_history.json      # Historial de salud (legacy)
+├── obd_server.py              # Servidor backend Flask
+├── database.py                # Módulo de base de datos SQLite
+├── init_database.py           # Inicializador de BD
+├── migrate_json_to_db.py      # Migrador de datos con backup
+├── index.html                 # Frontend principal
+├── script.js                  # Lógica JavaScript
+├── style.css                  # Estilos CSS
+├── requirements.txt           # Dependencias Python
+├── sentinel_pro.db            # Base de datos SQLite (se crea automáticamente)
+├── backup/                    # Backups automáticos
+│   └── 2025-11-17_15-30/
+│       ├── health_history.json
+│       ├── historial_viajes.json
+│       └── migration_report.txt
+└── csv_data/                  # Datos CSV
+    └── obd_readings.csv
 ```
 
 ---
 
-## 🔒 Seguridad y Privacidad
+## 🔧 CONFIGURACIÓN AVANZADA
 
-- **Todos los datos se almacenan localmente** en tu computadora
-- No se envía información a servidores externos (excepto Google Gemini para análisis IA)
-- La base de datos SQLite es un archivo local que puedes respaldar
-- Recomendación: Haz backups regulares usando el botón "Descargar Backup"
+### Cambiar Puerto del Servidor
 
----
-
-## ⚙️ Configuración Avanzada
-
-### Cambiar intervalo de lectura OBD-II
-
-Edita en `obd_server.py`:
+En `obd_server.py` (línea 1222):
 ```python
-POLL_INTERVAL = 3000  # Milisegundos (por defecto 3 segundos)
-THERMAL_READING_INTERVAL = 60  # Segundos (por defecto 60 segundos)
+app.run(host='0.0.0.0', port=5000, debug=False)
 ```
 
-### Cambiar modelo de IA de Gemini
+### Cambiar Puerto OBD-II
 
-Edita en `obd_server.py`:
-```python
-GEMINI_MODEL_NAME = "models/gemini-pro-latest"  # O "gemini-1.5-flash"
-```
+Los puertos comunes son:
+- **Windows**: `COM3`, `COM4`, `COM5`, `COM6`
+- **Linux**: `/dev/ttyUSB0`, `/dev/rfcomm0`
+- **macOS**: `/dev/tty.usbserial`
 
-### Limpiar telemetría antigua
+### Intervalo de Lectura OBD-II
 
-Ejecuta en Python:
-```python
-import database
-database.delete_old_telemetry(days=30)  # Eliminar datos > 30 días
+En `script.js` (línea 9):
+```javascript
+const POLL_INTERVAL = 3000; // Milisegundos (3000 = 3 segundos)
 ```
 
 ---
 
-## 📈 Próximas Características (Roadmap)
+## 📊 BASE DE DATOS
 
-- [ ] Comparativa entre vehículos (gráficas)
-- [ ] Dashboard de flota con vista resumida
-- [ ] Alertas por correo electrónico
-- [ ] Exportación de informes personalizados
-- [ ] Integración con calendarios para mantenimiento
-- [ ] Modo offline completo
-- [ ] App móvil (Android/iOS)
+### Tablas Principales
+
+| Tabla | Descripción |
+|-------|-------------|
+| `vehicles` | Información de vehículos |
+| `telemetry_data` | Datos OBD-II en tiempo real |
+| `maintenance_records` | Historial de mantenimiento |
+| `ai_analysis` | Análisis de IA y salud |
+
+### Backup Manual de la Base de Datos
+
+```bash
+cp sentinel_pro.db sentinel_pro_backup.db
+```
+
+O desde la interfaz web:
+1. Ve a la sección "Gestión de Archivos CSV"
+2. Haz clic en **"Descargar Backup de Base de Datos"**
 
 ---
 
-## 👨‍💻 Soporte
+## 🛠️ SOLUCIÓN DE PROBLEMAS
 
-Si encuentras algún problema o tienes sugerencias:
+### ❌ Error: "No se puede conectar a OBD-II"
 
-1. Revisa la sección "Solución de Problemas"
-2. Verifica que todas las dependencias estén instaladas
-3. Consulta los mensajes de error en la consola del servidor
-4. Abre un issue en el repositorio del proyecto
+**Soluciones:**
+1. Verifica que el adaptador OBD-II esté conectado al puerto del vehículo
+2. Verifica que el motor esté encendido
+3. Comprueba que el puerto COM es correcto en `obd_server.py`
+4. Asegúrate de que el adaptador es compatible (ELM327)
+
+### ❌ Error: "API KEY no válida" (Gemini)
+
+**Soluciones:**
+1. Obtén una API Key en https://makersuite.google.com/app/apikey
+2. Edita `obd_server.py` línea 27
+3. Asegúrate de que la API Key tenga permisos activados
+
+### ❌ El modal no se muestra correctamente
+
+**Solución:**
+- Asegúrate de que los archivos `style.css` y `script.js` estén correctamente vinculados
+- Limpia la caché del navegador (Ctrl + F5)
+- Verifica que no haya errores en la consola del navegador (F12)
+
+### ❌ Los datos no se guardan
+
+**Soluciones:**
+1. Verifica que la base de datos se haya inicializado: `python init_database.py`
+2. Comprueba los permisos de escritura en la carpeta del proyecto
+3. Revisa la consola del servidor para ver errores
+
+### ❌ Error en la migración de datos
+
+**Solución:**
+- Los archivos JSON deben estar en la raíz del proyecto
+- Formato JSON válido (usa https://jsonlint.com/ para validar)
+- Si falla, revisa `backup/FECHA_HORA/migration_report.txt`
 
 ---
 
-## 📄 Licencia
+## 📱 COMPATIBILIDAD
+
+### Navegadores Soportados
+- ✅ Google Chrome / Chromium (Recomendado)
+- ✅ Mozilla Firefox
+- ✅ Microsoft Edge
+- ✅ Safari
+- ⚠️ Internet Explorer (No soportado)
+
+### Sistemas Operativos
+- ✅ Windows 10/11
+- ✅ Linux (Ubuntu, Debian, Fedora)
+- ✅ macOS
+
+### Adaptadores OBD-II Compatibles
+- ✅ ELM327 v1.5 (Bluetooth, USB, WiFi)
+- ✅ OBDLink SX/MX/MX+
+- ✅ BAFX Products 34t5
+- ⚠️ Adaptadores chinos baratos (compatibilidad variable)
+
+---
+
+## 📝 NOTAS IMPORTANTES
+
+### 🔒 Privacidad y Seguridad
+- ✅ **Todos los datos se almacenan localmente** en tu ordenador
+- ✅ No se envían datos a servidores externos (excepto Google Gemini para análisis IA)
+- ✅ La base de datos NO está cifrada por defecto
+- ⚠️ Haz backups regulares de `sentinel_pro.db`
+
+### ⚡ Rendimiento
+- El sistema está optimizado para lecturas cada 3 segundos
+- La base de datos puede crecer significativamente con el tiempo
+- Recomendado: Limpiar datos antiguos cada 6-12 meses
+
+### 🚗 Compatibilidad Vehicular
+- Funciona con **todos los vehículos OBD-II** (fabricados después de 2001)
+- Algunos parámetros pueden no estar disponibles en vehículos antiguos
+- Vehículos eléctricos tienen PIDs diferentes
+
+---
+
+## 🆘 SOPORTE Y CONTRIBUCIONES
+
+### Reportar Errores
+Si encuentras un error:
+1. Abre un **Issue** en GitHub
+2. Incluye:
+   - Descripción del error
+   - Pasos para reproducirlo
+   - Captura de pantalla (si aplica)
+   - Logs del servidor
+
+### Contribuir
+¡Las contribuciones son bienvenidas!
+1. Haz un Fork del proyecto
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit tus cambios (`git commit -am 'Añadir nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+---
+
+## 📜 LICENCIA
 
 Este proyecto es de código abierto. Puedes usarlo, modificarlo y distribuirlo libremente.
 
 ---
 
-## 🙏 Agradecimientos
+## 🙏 CRÉDITOS
 
-- **Python-OBD** - Librería para comunicación OBD-II
-- **Google Gemini** - Inteligencia artificial para análisis predictivo
-- **Flask** - Framework web para el servidor
-- **Font Awesome** - Iconos de la interfaz
+- **Python OBD**: https://github.com/brendan-w/python-OBD
+- **Google Gemini AI**: https://ai.google.dev/
+- **Flask Framework**: https://flask.palletsprojects.com/
+- **Font Awesome Icons**: https://fontawesome.com/
 
 ---
 
-**SENTINEL PRO v10.0** - Sistema profesional de mantenimiento predictivo vehicular
+## 🎯 ROADMAP FUTURO
 
-© 2025 - Desarrollado con ❤️ para la comunidad automotriz
+- [ ] App móvil nativa (Android/iOS)
+- [ ] Dashboard web remoto
+- [ ] Integración con talleres mecánicos
+- [ ] Alertas por email/SMS
+- [ ] Sincronización en la nube
+- [ ] Soporte para flotas empresariales
+- [ ] Integración con OBD2 WiFi directo
+
+---
+
+**⭐ Si te gusta SENTINEL PRO, dale una estrella en GitHub ⭐**
+
+**Versión:** 10.0 Multi-Vehículo
+**Última actualización:** 17 de Noviembre de 2025
+**Estado:** ✅ Estable y en producción
