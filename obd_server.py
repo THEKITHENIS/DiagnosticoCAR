@@ -1342,6 +1342,65 @@ def activate_vehicle_legacy():
         print(f"[VEHICLES] Error activando vehículo: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/set_active_vehicle', methods=['POST'])
+def set_active_vehicle():
+    """Activar un vehículo específico (alias de activate_vehicle)"""
+    global active_vehicle_id
+
+    try:
+        data = request.json
+        # Aceptar tanto 'vehicle_id' como 'id'
+        vehicle_id = data.get('vehicle_id') or data.get('id')
+
+        if not vehicle_id:
+            print("[VEHICLES] Error: ID de vehículo no proporcionado")
+            return jsonify({'success': False, 'error': 'ID de vehículo requerido'}), 400
+
+        print(f"[VEHICLES] Intentando activar vehículo ID: {vehicle_id}")
+
+        # Verificar que el vehículo existe
+        vehicle = database.get_vehicle_by_id(vehicle_id)
+
+        if not vehicle:
+            print(f"[VEHICLES] Error: Vehículo {vehicle_id} no encontrado")
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+
+        # Actualizar vehículo activo en base de datos (marcar is_active)
+        try:
+            conn = database.get_db_connection()
+            # Desactivar todos los vehículos
+            conn.execute('UPDATE vehicles SET is_active = 0')
+            # Activar el seleccionado
+            conn.execute('UPDATE vehicles SET is_active = 1, updated_at = ? WHERE id = ?',
+                        (datetime.now().isoformat(), vehicle_id))
+            conn.commit()
+            conn.close()
+        except Exception as db_error:
+            print(f"[VEHICLES] Error actualizando DB: {db_error}")
+
+        active_vehicle_id = vehicle_id
+
+        # Resetear datos de viaje al cambiar de vehículo
+        reset_trip()
+
+        print(f"[VEHICLES] ✓ Vehículo activado: {vehicle['brand']} {vehicle['model']}")
+
+        return jsonify({
+            'success': True,
+            'message': f"Vehículo {vehicle['brand']} {vehicle['model']} activado correctamente",
+            'vehicle': {
+                'id': vehicle['id'],
+                'brand': vehicle['brand'],
+                'model': vehicle['model'],
+                'year': vehicle['year']
+            }
+        })
+
+    except Exception as e:
+        print(f"[VEHICLES] Error en set_active_vehicle: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/get_active_vehicle', methods=['GET'])
 def get_active_vehicle_legacy():
     """Obtener el vehículo activo (compatible con frontend antiguo)"""
@@ -1459,6 +1518,51 @@ def serve_static(path):
         print(f"[STATIC] Error sirviendo {path}: {e}")
         return jsonify({'error': 'Archivo no encontrado'}), 404
 
+# =============================================================================
+# MANEJADORES DE ERRORES - Devuelven JSON en lugar de HTML
+# =============================================================================
+
+@app.errorhandler(404)
+def not_found(error):
+    """Manejar errores 404 devolviendo JSON en lugar de HTML"""
+    print(f"[ERROR 404] {request.method} {request.path}")
+    return jsonify({
+        'success': False,
+        'error': 'Endpoint no encontrado',
+        'message': f'El endpoint {request.method} {request.path} no existe',
+        'available_endpoints': [
+            'GET /get_vehicles',
+            'POST /save_vehicle',
+            'POST /set_active_vehicle',
+            'POST /activate_vehicle',
+            'GET /get_active_vehicle',
+            'GET /get_live_data'
+        ]
+    }), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    """Manejar errores 405 devolviendo JSON en lugar de HTML"""
+    print(f"[ERROR 405] Método {request.method} no permitido para {request.path}")
+    return jsonify({
+        'success': False,
+        'error': 'Método HTTP no permitido',
+        'message': f'El endpoint {request.path} no acepta el método {request.method}',
+        'hint': 'Verifica que estés usando el método HTTP correcto (GET/POST/PUT/DELETE)'
+    }), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Manejar errores 500 devolviendo JSON en lugar de HTML"""
+    print(f"[ERROR 500] Error interno: {str(error)}")
+    traceback.print_exc()
+    return jsonify({
+        'success': False,
+        'error': 'Error interno del servidor',
+        'message': str(error),
+        'hint': 'Revisa los logs del servidor para más detalles'
+    }), 500
+
 if __name__ == "__main__":
     print("=" * 70)
     print("SENTINEL PRO - MANTENIMIENTO PREDICTIVO v10.0 MULTI-VEHÍCULO")
@@ -1482,7 +1586,43 @@ if __name__ == "__main__":
     print("  ✓ Averías comunes por modelo")
     print("  ✓ Tasación inteligente")
     print("  ✓ Backup de base de datos")
+    print("  ✓ Manejadores de errores JSON (404/405/500)")
+
+    print("\n[ENDPOINTS DISPONIBLES]")
+    print("  📄 Páginas HTML:")
+    print("     - GET  /                         → index.html")
+    print("     - GET  /vehiculos.html           → Gestión vehículos")
+    print("\n  🚗 Gestión de Vehículos:")
+    print("     - GET  /get_vehicles             → Listar todos")
+    print("     - POST /save_vehicle             → Crear/actualizar")
+    print("     - POST /update_vehicle           → Actualizar")
+    print("     - POST /delete_vehicle           → Eliminar")
+    print("     - POST /set_active_vehicle       → Activar (vehicle_id)")
+    print("     - POST /activate_vehicle         → Activar (id)")
+    print("     - GET  /get_active_vehicle       → Obtener activo")
+    print("     - GET  /get_fleet_stats          → Estadísticas flota")
+    print("\n  📊 Telemetría OBD-II:")
+    print("     - GET  /get_live_data            → Datos en tiempo real")
+    print("     - GET  /get_vehicle_health       → Salud del vehículo")
+    print("\n  🤖 Análisis IA:")
+    print("     - POST /predictive_analysis      → Predicción mantenimiento")
+    print("     - POST /get_common_failures      → Averías comunes")
+    print("     - POST /get_vehicle_valuation    → Tasación vehículo")
+    print("\n  📁 Archivos CSV:")
+    print("     - POST /upload_csv               → Subir CSV")
+    print("     - GET  /download_current_csv     → Descargar CSV")
+    print("     - GET  /list_uploaded_csvs       → Listar archivos")
+    print("\n  📋 Reportes:")
+    print("     - POST /generate_report          → Generar PDF")
 
     initialize_obd_connection(force_reconnect=True)
-    print("\n✓ Servidor activo en http://localhost:5000\n")
+    print("\n" + "=" * 70)
+    print("✓ Servidor ACTIVO en http://localhost:5000")
+    print("=" * 70)
+    print("\n[TESTING] Prueba con:")
+    print("  curl http://localhost:5000/get_vehicles")
+    print("  curl -X POST http://localhost:5000/set_active_vehicle \\")
+    print("       -H 'Content-Type: application/json' \\")
+    print("       -d '{\"vehicle_id\": 1}'")
+    print("")
     app.run(host='0.0.0.0', port=5000, debug=False)
