@@ -3,55 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENTINEL PRO - Sistema de Mantenimiento Predictivo</title>
+    <title>SENTINEL PRO v10.0 - Sistema Multi-Vehículo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- HEADER -->
+    <!-- HEADER CON SELECTOR DE VEHÍCULO -->
     <header>
-        <h1>
-            <i class="fas fa-shield-halved"></i>
-            SENTINEL PRO
-        </h1>
-        <p>Sistema Inteligente de Mantenimiento Predictivo Vehicular</p>
+        <div class="header-content">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-shield-halved"></i>
+                    SENTINEL PRO v10.0
+                </h1>
+                <p>Sistema Inteligente de Mantenimiento Predictivo Multi-Vehículo</p>
+            </div>
+            <div class="header-vehicle-selector" id="headerVehicleSelector" style="display: none;">
+                <i class="fas fa-car"></i>
+                <select id="quickVehicleSelector" class="vehicle-dropdown">
+                    <option value="">Sin vehículo seleccionado</option>
+                </select>
+            </div>
+        </div>
     </header>
 
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="container">
-        
-        <!-- SECCIÓN 1: CONFIGURACIÓN DEL VEHÍCULO -->
-        <div class="card">
+
+        <!-- SECCIÓN 0: GESTIÓN DE VEHÍCULOS (NUEVA) -->
+        <div class="card vehicle-management-card">
+            <h2>
+                <i class="fas fa-cars"></i>
+                Gestión de Vehículos
+            </h2>
+            <p class="section-description">
+                Gestiona tu flota de vehículos. Añade, edita o elimina vehículos. Selecciona el vehículo activo para monitoreo en tiempo real.
+            </p>
+
+            <div class="vehicle-management-actions">
+                <button id="addVehicleBtn" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    Añadir Nuevo Vehículo
+                </button>
+            </div>
+
+            <!-- LISTA DE VEHÍCULOS -->
+            <div id="vehiclesList" class="vehicles-grid">
+                <div class="no-vehicles-message">
+                    <i class="fas fa-car-side" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                    <h3>No hay vehículos registrados</h3>
+                    <p>Añade tu primer vehículo para comenzar el monitoreo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 1: CONFIGURACIÓN DEL VEHÍCULO (modificada para vehículo seleccionado) -->
+        <div class="card" id="vehicleConfigCard">
             <h2>
                 <i class="fas fa-cog"></i>
-                Configuración del Vehículo
+                Configuración del Vehículo Activo
             </h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="vehicleBrand"><i class="fas fa-car"></i> Marca</label>
-                    <input type="text" id="vehicleBrand" placeholder="Ej: Seat">
+            <div id="noActiveVehicleMessage" class="info-message">
+                <i class="fas fa-info-circle"></i>
+                Selecciona un vehículo de la sección "Gestión de Vehículos" para ver su configuración
+            </div>
+            <div id="activeVehicleConfig" style="display: none;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="vehicleBrand"><i class="fas fa-car"></i> Marca</label>
+                        <input type="text" id="vehicleBrand" placeholder="Ej: Seat" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleModel"><i class="fas fa-cogs"></i> Modelo y Motor</label>
+                        <input type="text" id="vehicleModel" placeholder="Ej: León 2.0 TDI" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleYear"><i class="fas fa-calendar"></i> Año</label>
+                        <input type="number" id="vehicleYear" placeholder="Ej: 2018" min="1996" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleMileage"><i class="fas fa-road"></i> Kilómetros</label>
+                        <input type="number" id="vehicleMileage" placeholder="Ej: 95000" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleType"><i class="fas fa-droplet"></i> Combustible</label>
+                        <select id="vehicleType" disabled>
+                            <option value="gasolina">Gasolina</option>
+                            <option value="diesel">Diésel</option>
+                            <option value="hibrido">Híbrido</option>
+                            <option value="electrico">Eléctrico</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="vehicleModel"><i class="fas fa-cogs"></i> Modelo y Motor</label>
-                    <input type="text" id="vehicleModel" placeholder="Ej: León 2.0 TDI">
-                </div>
-                <div class="form-group">
-                    <label for="vehicleYear"><i class="fas fa-calendar"></i> Año</label>
-                    <input type="number" id="vehicleYear" placeholder="Ej: 2018" min="1996">
-                </div>
-                <div class="form-group">
-                    <label for="vehicleMileage"><i class="fas fa-road"></i> Kilómetros</label>
-                    <input type="number" id="vehicleMileage" placeholder="Ej: 95000">
-                </div>
-                <div class="form-group">
-                    <label for="vehicleType"><i class="fas fa-droplet"></i> Combustible</label>
-                    <select id="vehicleType">
-                        <option value="gasolina">Gasolina</option>
-                        <option value="diesel">Diésel</option>
-                        <option value="hibrido">Híbrido</option>
-                        <option value="electrico">Eléctrico</option>
-                    </select>
-                </div>
+                <p class="info-note"><i class="fas fa-info-circle"></i> Para editar estos datos, usa el botón "Editar" en la tarjeta del vehículo</p>
             </div>
         </div>
 
@@ -84,7 +128,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="warnings_container" class="warnings-container" style="display: none;"></div>
             <div id="predictions_container" class="predictions-container" style="display: none;"></div>
         </div>
@@ -96,7 +140,7 @@
                 Datos en Vivo del Vehículo
                 <span class="optimization-badge"><i class="fas fa-bolt"></i> Optimizado</span>
             </h2>
-            
+
             <div class="data-section-header">
                 <h3><i class="fas fa-stopwatch"></i> Datos Críticos (cada 3 segundos)</h3>
             </div>
@@ -226,12 +270,16 @@
                 Gestión de Archivos CSV
             </h2>
             <p>Sube archivos CSV de viajes previos para análisis histórico y comparativo.</p>
-            
+
             <div style="margin: 1.5rem 0;">
                 <input type="file" id="uploadCSVInput" accept=".csv" style="display: none;">
                 <button id="uploadCSVBtn" class="btn btn-primary">
                     <i class="fas fa-file-upload"></i>
                     Subir Archivo CSV
+                </button>
+                <button id="backupDatabaseBtn" class="btn btn-primary">
+                    <i class="fas fa-download"></i>
+                    Descargar Backup de Base de Datos
                 </button>
             </div>
 
@@ -276,11 +324,68 @@
 
     </div>
 
+    <!-- MODAL PARA AÑADIR/EDITAR VEHÍCULO -->
+    <div id="vehicleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">
+                    <i class="fas fa-car"></i>
+                    Añadir Nuevo Vehículo
+                </h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <form id="vehicleForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="modalVehicleBrand"><i class="fas fa-car"></i> Marca *</label>
+                        <input type="text" id="modalVehicleBrand" placeholder="Ej: Seat" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalVehicleModel"><i class="fas fa-cogs"></i> Modelo y Motor *</label>
+                        <input type="text" id="modalVehicleModel" placeholder="Ej: León 2.0 TDI" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalVehicleYear"><i class="fas fa-calendar"></i> Año *</label>
+                        <input type="number" id="modalVehicleYear" placeholder="Ej: 2018" min="1996" max="2030" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalVehicleMileage"><i class="fas fa-road"></i> Kilómetros *</label>
+                        <input type="number" id="modalVehicleMileage" placeholder="Ej: 95000" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalVehicleType"><i class="fas fa-droplet"></i> Tipo de Combustible *</label>
+                        <select id="modalVehicleType" required>
+                            <option value="gasolina">Gasolina</option>
+                            <option value="diesel">Diésel</option>
+                            <option value="hibrido">Híbrido</option>
+                            <option value="electrico">Eléctrico</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalVehicleVIN"><i class="fas fa-barcode"></i> Número de Bastidor (VIN)</label>
+                        <input type="text" id="modalVehicleVIN" placeholder="Opcional" maxlength="17">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalVehiclePlate"><i class="fas fa-id-card"></i> Matrícula</label>
+                        <input type="text" id="modalVehiclePlate" placeholder="Opcional" maxlength="10">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Guardar Vehículo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer>
-        <p>SENTINEL PRO v9.0 - Sistema de Mantenimiento Predictivo © 2025</p>
+        <p>SENTINEL PRO v10.0 Multi-Vehículo - Sistema de Mantenimiento Predictivo © 2025</p>
         <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">
-            Optimizado: Datos críticos cada 3s | Datos térmicos cada 60s | Análisis predictivo con IA
+            Base de datos SQLite | Gestión multi-vehículo | Historial completo | Análisis predictivo con IA
         </p>
     </footer>
 
