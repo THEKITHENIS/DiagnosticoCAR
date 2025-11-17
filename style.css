@@ -30,30 +30,67 @@ header {
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     color: white;
     padding: 1.5rem 2rem;
-    text-align: center;
     border-bottom: 4px solid #3b82f6;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-header h1 {
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1500px;
+    margin: 0 auto;
+    gap: 2rem;
+}
+
+.header-title h1 {
     margin: 0;
     font-size: 2.2rem;
     font-weight: 700;
     color: #fff;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 15px;
 }
 
-header h1 .fas {
+.header-title h1 .fas {
     color: #3b82f6;
 }
 
-header p {
+.header-title p {
     margin: 0.5rem 0 0;
     font-size: 1rem;
     color: #cbd5e1;
+}
+
+.header-vehicle-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    border-radius: 8px;
+}
+
+.header-vehicle-selector i {
+    color: #3b82f6;
+    font-size: 1.2rem;
+}
+
+.vehicle-dropdown {
+    background: #334155;
+    color: white;
+    border: 1px solid #475569;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.vehicle-dropdown:focus {
+    outline: none;
+    border-color: #3b82f6;
 }
 
 /* === CARDS === */
@@ -1263,4 +1300,419 @@ footer p {
 
 .hidden {
     display: none;
+}
+
+/* =============================================================================
+   MODAL - VENTANA FLOTANTE CON OVERLAY
+   ============================================================================= */
+
+/* Overlay de fondo oscuro semitransparente */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75); /* Fondo oscuro semitransparente */
+    z-index: 9999;
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Contenedor del modal centrado */
+.modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease;
+    position: relative;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header del modal */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Botón cerrar (X) */
+.modal-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: #fef2f2;
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+/* Acciones del modal (botones) */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-secondary {
+    background-color: #64748b;
+}
+
+.btn-secondary:hover {
+    background-color: #475569;
+}
+
+/* =============================================================================
+   GESTIÓN DE VEHÍCULOS
+   ============================================================================= */
+
+.vehicle-management-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-left: 4px solid #3b82f6;
+}
+
+.section-description {
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.vehicle-management-actions {
+    margin-bottom: 1.5rem;
+}
+
+/* Grid de tarjetas de vehículos */
+.vehicles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+/* Tarjeta individual de vehículo */
+.vehicle-card {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.vehicle-card:hover {
+    border-color: #3b82f6;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+}
+
+.vehicle-card.active {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.vehicle-card.active::before {
+    content: '✓ ACTIVO';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #10b981;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.vehicle-card-header {
+    margin-bottom: 1rem;
+}
+
+.vehicle-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vehicle-card-subtitle {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.vehicle-card-body {
+    margin: 1rem 0;
+}
+
+.vehicle-info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.vehicle-info-row i {
+    width: 18px;
+    color: #3b82f6;
+}
+
+.vehicle-card-footer {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-small {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    flex: 1;
+}
+
+.btn-success {
+    background-color: #10b981;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+}
+
+.btn-danger {
+    background-color: #ef4444;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.btn-icon {
+    padding: 8px 12px;
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.btn-icon:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Mensaje cuando no hay vehículos */
+.no-vehicles-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #94a3b8;
+}
+
+.no-vehicles-message h3 {
+    margin: 0.5rem 0;
+    color: #64748b;
+}
+
+.no-vehicles-message p {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+}
+
+/* Badge de tipo de combustible */
+.fuel-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: #eff6ff;
+    color: #1e40af;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.fuel-badge.diesel {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.fuel-badge.hibrido {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.fuel-badge.electrico {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Health score badge en tarjeta */
+.vehicle-health-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.vehicle-health-badge.excellent {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.vehicle-health-badge.good {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.vehicle-health-badge.warning {
+    background: #fed7aa;
+    color: #92400e;
+}
+
+.vehicle-health-badge.critical {
+    background: #fecaca;
+    color: #991b1b;
+}
+
+/* Nota informativa */
+.info-note {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #1e40af;
+}
+
+.info-message {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #92400e;
+}
+
+.info-message i {
+    font-size: 1.5rem;
+    color: #f59e0b;
+}
+
+/* =============================================================================
+   RESPONSIVE - MODAL Y VEHÍCULOS
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-vehicle-selector {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .vehicle-dropdown {
+        flex: 1;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        margin: 10px;
+    }
+
+    .vehicles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .vehicle-card-footer {
+        flex-direction: column;
+    }
+
+    .btn-small {
+        width: 100%;
+    }
 }
