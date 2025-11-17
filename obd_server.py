@@ -2,7 +2,7 @@
 # SENTINEL PRO - MANTENIMIENTO PREDICTIVO v10.0 - MULTI-VEHÍCULO + SQLite
 # Sistema completo con gestión de múltiples vehículos
 # =============================================================================
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 import obd
 import time
@@ -1192,6 +1192,272 @@ def backup_database_endpoint():
     except Exception as e:
         print(f"[BACKUP] Error: {e}")
         return jsonify({"error": str(e)}), 500
+
+# =============================================================================
+# ENDPOINTS COMPATIBLES CON FRONTEND ANTIGUO (SIN /api/)
+# =============================================================================
+
+@app.route('/get_vehicles', methods=['GET'])
+def get_vehicles_legacy():
+    """Obtener todos los vehículos (compatible con frontend antiguo)"""
+    try:
+        vehicles = database.get_all_vehicles()
+
+        # Añadir estadísticas a cada vehículo
+        for vehicle in vehicles:
+            stats = database.get_vehicle_statistics(vehicle['id'])
+            vehicle['statistics'] = stats
+
+        return jsonify({
+            'success': True,
+            'vehicles': vehicles
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error obteniendo vehículos: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/save_vehicle', methods=['POST'])
+def save_vehicle_legacy():
+    """Crear un nuevo vehículo (compatible con frontend antiguo)"""
+    try:
+        data = request.json
+        brand = data.get('brand')
+        model = data.get('model')
+        year = data.get('year')
+        mileage = data.get('mileage')
+        fuel_type = data.get('fuel_type', 'gasolina')
+        vin = data.get('vin', '')
+        plate = data.get('plate', '')
+        nickname = data.get('nickname', '')
+
+        if not all([brand, model, year, mileage]):
+            return jsonify({'success': False, 'error': 'Faltan datos obligatorios'}), 400
+
+        vehicle_id = database.create_vehicle(
+            brand, model, int(year), int(mileage), fuel_type, vin, plate
+        )
+
+        return jsonify({
+            'success': True,
+            'vehicle_id': vehicle_id,
+            'message': 'Vehículo creado correctamente'
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error creando vehículo: {e}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/update_vehicle', methods=['POST'])
+def update_vehicle_legacy():
+    """Actualizar un vehículo existente (compatible con frontend antiguo)"""
+    try:
+        data = request.json
+        vehicle_id = data.get('id')
+        brand = data.get('brand')
+        model = data.get('model')
+        year = data.get('year')
+        mileage = data.get('mileage')
+        fuel_type = data.get('fuel_type', 'gasolina')
+        vin = data.get('vin', '')
+        plate = data.get('plate', '')
+
+        if not all([vehicle_id, brand, model, year, mileage]):
+            return jsonify({'success': False, 'error': 'Faltan datos obligatorios'}), 400
+
+        success = database.update_vehicle(
+            vehicle_id, brand, model, int(year), int(mileage), fuel_type, vin, plate
+        )
+
+        if not success:
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Vehículo actualizado correctamente'
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error actualizando vehículo: {e}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/delete_vehicle', methods=['POST'])
+def delete_vehicle_legacy():
+    """Eliminar un vehículo (compatible con frontend antiguo)"""
+    global active_vehicle_id
+
+    try:
+        data = request.json
+        vehicle_id = data.get('id')
+
+        if not vehicle_id:
+            return jsonify({'success': False, 'error': 'ID de vehículo requerido'}), 400
+
+        # Si es el vehículo activo, deseleccionarlo
+        if active_vehicle_id == vehicle_id:
+            active_vehicle_id = None
+
+        success = database.delete_vehicle(vehicle_id)
+
+        if not success:
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Vehículo eliminado correctamente'
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error eliminando vehículo: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/activate_vehicle', methods=['POST'])
+def activate_vehicle_legacy():
+    """Activar un vehículo (compatible con frontend antiguo)"""
+    global active_vehicle_id
+
+    try:
+        data = request.json
+        vehicle_id = data.get('id')
+
+        if not vehicle_id:
+            return jsonify({'success': False, 'error': 'ID de vehículo requerido'}), 400
+
+        # Verificar que el vehículo existe
+        vehicle = database.get_vehicle_by_id(vehicle_id)
+
+        if not vehicle:
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+
+        active_vehicle_id = vehicle_id
+
+        # Resetear datos de viaje al cambiar de vehículo
+        reset_trip()
+
+        print(f"[VEHICLES] Vehículo activo: {vehicle['brand']} {vehicle['model']}")
+
+        return jsonify({
+            'success': True,
+            'message': f"Vehículo {vehicle['brand']} {vehicle['model']} activado"
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error activando vehículo: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/get_active_vehicle', methods=['GET'])
+def get_active_vehicle_legacy():
+    """Obtener el vehículo activo (compatible con frontend antiguo)"""
+    global active_vehicle_id
+
+    if active_vehicle_id is None:
+        return jsonify({
+            'success': False,
+            'message': 'No hay vehículo activo'
+        })
+
+    try:
+        vehicle = database.get_vehicle_by_id(active_vehicle_id)
+
+        if not vehicle:
+            active_vehicle_id = None
+            return jsonify({
+                'success': False,
+                'message': 'Vehículo activo no encontrado'
+            })
+
+        return jsonify({
+            'success': True,
+            'vehicle': vehicle
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error obteniendo vehículo activo: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/get_vehicle/<int:vehicle_id>', methods=['GET'])
+def get_vehicle_by_id_legacy(vehicle_id):
+    """Obtener un vehículo específico (compatible con frontend antiguo)"""
+    try:
+        vehicle = database.get_vehicle_by_id(vehicle_id)
+
+        if not vehicle:
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+
+        # Añadir estadísticas
+        stats = database.get_vehicle_statistics(vehicle_id)
+        vehicle['statistics'] = stats
+
+        return jsonify({
+            'success': True,
+            'vehicle': vehicle
+        })
+    except Exception as e:
+        print(f"[VEHICLES] Error obteniendo vehículo: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/get_fleet_stats', methods=['GET'])
+def get_fleet_stats():
+    """Obtener estadísticas de la flota completa"""
+    try:
+        vehicles = database.get_all_vehicles()
+        total_vehicles = len(vehicles)
+        total_km = sum(v.get('mileage', 0) for v in vehicles)
+
+        # Contar vehículos conectados hoy (aquellos con last_connection en las últimas 24h)
+        connected_today = 0
+        vehicles_with_warnings = 0
+
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        yesterday = now - timedelta(days=1)
+
+        for v in vehicles:
+            # Verificar conexión reciente
+            if v.get('last_connection'):
+                try:
+                    last_conn = datetime.fromisoformat(v['last_connection'])
+                    if last_conn > yesterday:
+                        connected_today += 1
+                except:
+                    pass
+
+            # Contar vehículos con advertencias (por ahora basado en análisis de salud)
+            # Esto es una aproximación - puedes mejorarlo con datos reales
+            if v.get('mileage', 0) > 200000:  # Ejemplo: alta kilometraje
+                vehicles_with_warnings += 1
+
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_vehicles': total_vehicles,
+                'total_kilometers': total_km,
+                'connected_today': connected_today,
+                'vehicles_with_warnings': vehicles_with_warnings
+            }
+        })
+    except Exception as e:
+        print(f"[FLEET] Error obteniendo estadísticas: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# =============================================================================
+# SERVIR ARCHIVOS HTML ESTÁTICOS
+# =============================================================================
+
+@app.route('/')
+def serve_index():
+    """Servir página principal"""
+    return send_from_directory('.', 'index.html')
+
+@app.route('/vehiculos.html')
+def serve_vehiculos():
+    """Servir página de vehículos"""
+    return send_from_directory('.', 'vehiculos.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    """Servir archivos estáticos (CSS, JS, imágenes, etc.)"""
+    try:
+        return send_from_directory('.', path)
+    except Exception as e:
+        print(f"[STATIC] Error sirviendo {path}: {e}")
+        return jsonify({'error': 'Archivo no encontrado'}), 404
 
 if __name__ == "__main__":
     print("=" * 70)
